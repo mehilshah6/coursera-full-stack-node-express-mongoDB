@@ -1,22 +1,46 @@
-var rect = {
-	perimeter: (x, y) => (2*(x+y)),
-	area: (x, y) => (x*y)
-};
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-function solveRect(l,b) {
-    console.log("Solving for rectangle with l = " + l + " and b = " + b);
+const hostname = 'localhost';
+const port = 3000;
 
-    if (l <= 0 || b <= 0) {
-        console.log("Rectangle dimensions should be greater than zero:  l = "
-               + l + ",  and b = " + b);
-    }
-    else {
-	    console.log("The area of the rectangle is " + rect.area(l,b));
-	    console.log("The perimeter of the rectangle is " + rect.perimeter(l,b));
-    }
+const notFound = (req, res) => {
+    res.statusCode = 404;
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<html><body><h1>Error 404: ' + req.method + 
+    ' not supported</h1></body></html>');
 }
+const server = http.createServer((req, res) => {
+    console.log('Request for ' + req.url + ' by method : ' + req.method);
+    
+    if (req.method == 'GET') {
+        let fileUrl;
+        
+        if (req.url == '/') fileUrl = '/index.html';
+        else fileUrl = req.url;
+        
+        let filePath = path.resolve('public' + fileUrl);
+        const fileExt = path.extname(filePath);
+        
+        if (fileExt == '.html') {
+            fs.exists(filePath, (exists) => {
+                if (!exists) {
+                    notFound(req, res);
+                    return;
+                }
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'text/html');
+                fs.createReadStream(filePath).pipe(res);
+            });
+        } else {
+            notFound(req, res);
+        }
+    } else {
+        notFound(req, res);
+    }
+});
 
-solveRect(2,4);
-solveRect(3,5);
-solveRect(0,5);
-solveRect(-3,5);
+server.listen(port, hostname, () => {
+    console.log(`Server running to http://${hostname}:${port}/`);
+});
