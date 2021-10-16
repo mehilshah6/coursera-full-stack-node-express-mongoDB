@@ -1,46 +1,27 @@
+const express = require('express');
 const http = require('http');
-const fs = require('fs');
-const path = require('path');
+const morgan = require('morgan');
+const bodyParser = require('body-parser');
 
 const hostname = 'localhost';
 const port = 3000;
+const app = express();
 
-const notFound = (req, res) => {
-    res.statusCode = 404;
-    res.setHeader('Content-Type', 'text/html');
-    res.end('<html><body><h1>Error 404: ' + req.method + 
-    ' not supported</h1></body></html>');
-}
-const server = http.createServer((req, res) => {
-    console.log('Request for ' + req.url + ' by method : ' + req.method);
-    
-    if (req.method == 'GET') {
-        let fileUrl;
-        
-        if (req.url == '/') fileUrl = '/index.html';
-        else fileUrl = req.url;
-        
-        let filePath = path.resolve('public' + fileUrl);
-        const fileExt = path.extname(filePath);
-        
-        if (fileExt == '.html') {
-            fs.exists(filePath, (exists) => {
-                if (!exists) {
-                    notFound(req, res);
-                    return;
-                }
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'text/html');
-                fs.createReadStream(filePath).pipe(res);
-            });
-        } else {
-            notFound(req, res);
-        }
-    } else {
-        notFound(req, res);
-    }
-});
+const dishRouter = require('./routes/dishRouter');
+const leaderRouter = require('./routes/leaderRouter');
+const promoRouter = require('./routes/promoRouter');
 
+app.use('/dishes', dishRouter);
+app.use('/leader', leaderRouter);
+app.use('/promotions', promoRouter);
+
+app.use(morgan('dev'));
+app.use(bodyParser.json());
+app.use(express.static(__dirname + '/public'));
+
+
+const server = http.createServer(app);
 server.listen(port, hostname, () => {
-    console.log(`Server running to http://${hostname}:${port}/`);
+    console.log(`Server running at http://${hostname}:${port}/`);
 });
+
