@@ -1,27 +1,32 @@
-const express = require('express');
-const http = require('http');
-const morgan = require('morgan');
-const bodyParser = require('body-parser');
+const MongoClient = require('mongodb').MongoClient;
+const assert = require('assert');
 
-const hostname = 'localhost';
-const port = 3000;
-const app = express();
+const url = 'mongodb://localhost:27017';
+const dbName = 'conFusion';
 
-const dishRouter = require('./routes/dishRouter');
-const leaderRouter = require('./routes/leaderRouter');
-const promoRouter = require('./routes/promoRouter');
+const crudOperations = require('./crudOperations');
 
-app.use('/dishes', dishRouter);
-app.use('/leader', leaderRouter);
-app.use('/promotions', promoRouter);
-
-app.use(morgan('dev'));
-app.use(bodyParser.json());
-app.use(express.static(__dirname + '/public'));
-
-
-const server = http.createServer(app);
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+MongoClient.connect(url, (err, client) => {
+    assert.equal(err, null);
+    console.log("Connected to Server.");
+    const db = client.db(dbName);
+    crudOperations.insertDocument(db, { name: "Vadonut", description: "Test"},
+    "dishes", (result) => {
+        console.log("Insert Document:\n", result.ops);
+        crudOperations.findDocuments(db, "dishes", (docs) => {
+            console.log("Found Documents:\n", docs);
+            crudOperations.updateDocument(db, { name: "Vadonut" },
+            { description: "Updated Test" }, "dishes",
+            (result) => {
+                console.log("Updated Document:\n", result.result);
+                crudOperations.findDocuments(db, "dishes", (docs) => {
+                    console.log("Found Updated Documents:\n", docs);
+                    db.dropCollection("dishes", (result) => {
+                        console.log("Dropped Collection: ", result);
+                        client.close();
+                    });
+                });
+            });
+        });
+    });
 });
-
