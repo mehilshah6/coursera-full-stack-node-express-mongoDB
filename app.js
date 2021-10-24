@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 
 var dishRouter = require('./routes/dishRouter');
 var promotionsRouter = require('./routes/promotionsRouter');
+var leaderRouter = require('./routes/leaderRouter');
 
 const mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
@@ -40,6 +41,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/dishes',dishRouter);
 app.use('/promotions', promotionsRouter);
+app.use('/leaders', leaderRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
