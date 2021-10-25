@@ -1,8 +1,45 @@
 var express = require('express');
+var cookieParser = require('cookie-parser');
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
+var app = express();
+app.use(cookieParser('12345-67890-09876-54321'));
+app.use(session({
+  name : 'session-id',
+  secret : '12345-67890-09876-54321',
+  saveUninitialized : false,
+  resave : false,
+  store : new FileStore()
+}));
+
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
+function auth (req, res, next) {
+    console.log(req.session);
+
+  if(!req.session.user) {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
+      return next(err);
+  }
+  else {
+    if (req.session.user === 'authenticated') {
+      next();
+    }
+    else {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
+      return next(err);
+    }
+  }
+}
+
+app.use(auth);
+
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
-var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var dishRouter = require('./routes/dishRouter');
@@ -21,11 +58,10 @@ const connect = mongoose.connect(url, {
     /* other options */
   });
 
+
 connect.then((db) => {
     console.log("Connected correctly to server");
 }, (err) => { console.log(err); });
-
-var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
