@@ -15,7 +15,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/signup', (req, res, next) => {
-  User.register(new User({username: req.body.username}), 
+  User.register(new User({username: req.body.username, admin : req.body.admin}), 
     req.body.password, (err, user) => {
     if(err) {
       res.statusCode = 500;
@@ -37,7 +37,7 @@ router.post('/signup', (req, res, next) => {
         passport.authenticate('local')(req, res, () => {
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
-          res.json({success: true, status: 'Registration Successful!'});
+          res.json(user);
         });
       });
     }
